@@ -61,3 +61,4 @@ Now you should see a new interface appear on the host named `macvlan@eth0` (or s
 | `ADDITIONAL_ROUTES`             | space-separated list of additional routes on the bridge (can contain VIPs)                                                                 | ""                               | no       |
 | `CLEANUP_ON_EXIT`               | controls if the bridge is removed when the container exits. Setting this to `true` may disrupt ongoing services during container restarts. | false                            | no       |
 | `TZ`                            | timezone used by the container                                                                                                             | UTC                              | no       |
+| `DEBUG`                         | enable debug output                                                                                                                        | false                            | no       |
