@@ -34,13 +34,13 @@ On exit, it optionally removes the network bridge again to restore the original 
 First you need to create the `macvlan` docker network manually. The following snippet tries to determine the active interface and subnet itself:
 
 ```sh
+# Replace 'bridge0' with the name of your bridge interface (e.g., 'macvlan0').
+BRIDGE_INTERFACE=<your-bridge-interface>
+
 # determine relevant information of your primary interface
 PARENT_INTERFACE=$(ip route show default | awk '{print $5}')
 GATEWAY=$(ip route show default | awk '{print $3}')
-
-# Replace 'bridge0' with the name of your bridge interface (e.g., 'macvlan0').
-BRIDGE_INTERFACE=<your-bridge-interface>
-SUBNET=$(ip route show | grep ${BRIDGE_INTERFACE} | grep -v default | awk '{print $1}')
+SUBNET=$(ip route show | grep ${PARENT_INTERFACE} | grep -v default | awk '{print $1}')
 
 docker network create macvlan --driver macvlan -o parent=${PARENT_INTERFACE} --subnet ${SUBNET} --gateway ${GATEWAY}
 ```
