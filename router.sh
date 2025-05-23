@@ -17,6 +17,10 @@ PARENT_INTERFACE=$(docker network inspect ${MACVLAN_DOCKER_NETWORK} | jq -r '.[]
 
 ######## functions
 
+function log {
+  msg="$@"
+}
+
 function ip_route_add {
   IP=$(echo ${1} | cut -d'/' -f1)
   ip route show dev ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep -E "^${IP}(/[0-9]+|\s)" >/dev/null || (
