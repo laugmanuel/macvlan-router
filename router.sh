@@ -63,6 +63,6 @@ while [ true ]; do
   for IP in ${CONTAINER_IPS}; do ip_route_add ${IP}; done
   for IP in ${ADDITIONAL_ROUTES}; do ip_route_add ${IP}; done
 
-  ip route show dev ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep -v kernel
+  debug "$(ip route show dev ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep -v kernel)"
   sleep ${INTERVAL:-5}
 done
