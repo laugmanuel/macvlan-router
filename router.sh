@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-if  [[ "${DEBUG}" == "true" || "${DEBUG}" == "1" ]]; then
+if [[ "${DEBUG}" == "true" || "${DEBUG}" == "1" ]]; then
   set -x
 fi
 
@@ -18,24 +18,28 @@ PARENT_INTERFACE=$(docker network inspect ${MACVLAN_DOCKER_NETWORK} | jq -r '.[]
 ######## functions
 
 function log {
-  msg="$@"
+  echo "$@"
+}
+
+function debug {
+  [[ "${DEBUG}" == "true" || "${DEBUG}" == "1" ]] && log "$@"
 }
 
 function ip_route_add {
   IP=$(echo ${1} | cut -d'/' -f1)
   ip route show dev ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep -E "^${IP}(/[0-9]+|\s)" >/dev/null || (
-      echo "[$(date)] Adding route for ${IP} ..."
+      log "[$(date)] Adding route for ${IP} ..."
       ip route add ${IP} dev ${MACVLAN_BRIDGE_INTERFACE_NAME}
     )
 }
 
 function cleanup {
-  echo "[$(date)] Cleaning up..."
+  log "[$(date)] Cleaning up..."
   ip link del ${MACVLAN_BRIDGE_INTERFACE_NAME}
 }
 
 function trap_exit {
-  echo "[$(date)] Exiting..."
+  log "[$(date)] Exiting..."
   [[ "${CLEANUP_ON_EXIT}" == "true" || "${CLEANUP_ON_EXIT}" == "1" ]] && cleanup
   exit 0
 }
@@ -43,17 +47,17 @@ trap trap_exit SIGHUP SIGINT SIGTERM
 
 ######## routing config
 
-echo "[$(date)] Creating bridge interface: ${MACVLAN_BRIDGE_INTERFACE_NAME} ..."
+log "[$(date)] Creating bridge interface: ${MACVLAN_BRIDGE_INTERFACE_NAME} ..."
 ip link show ${MACVLAN_BRIDGE_INTERFACE_NAME} 2>/dev/null || ip link add ${MACVLAN_BRIDGE_INTERFACE_NAME} link ${PARENT_INTERFACE} type macvlan mode bridge
 
-echo "[$(date)] Adding IP to bridge interface: ${MACVLAN_BRIDGE_IP} ..."
+log "[$(date)] Adding IP to bridge interface: ${MACVLAN_BRIDGE_IP} ..."
 ip addr show ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep ${MACVLAN_BRIDGE_IP} || ip addr add ${MACVLAN_BRIDGE_IP} dev ${MACVLAN_BRIDGE_INTERFACE_NAME}
 
-echo "[$(date)] Bringing interface up: ${MACVLAN_BRIDGE_INTERFACE_NAME} ..."
+log "[$(date)] Bringing interface up: ${MACVLAN_BRIDGE_INTERFACE_NAME} ..."
 ip link show ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep "state UP" || ip link set ${MACVLAN_BRIDGE_INTERFACE_NAME} up
 
 while [ true ]; do
-  echo "[$(date)] Checking for docker network members..."
+  debug "[$(date)] Checking for docker network members..."
   CONTAINER_IPS=$(docker network inspect ${MACVLAN_DOCKER_NETWORK} | jq -r '.[].Containers | to_entries[].value.IPv4Address')
 
   for IP in ${CONTAINER_IPS}; do ip_route_add ${IP}; done
