@@ -47,7 +47,10 @@ function ip_route_check {
   CONTAINER_IPS="$1"
   IP=$(echo ${2} | cut -d'/' -f1)
 
-  echo $CONTAINER_IPS | grep -qE "^${IP}$" && return 0 || return 1
+  echo ${CONTAINER_IPS} | grep -qE "^${IP}$" && return 0
+  echo ${ADDITIONAL_ROUTES} | grep -qE "^${IP}$" && return 0
+
+  return 1
 }
 
 function cleanup {
@@ -88,7 +91,6 @@ while [ true ]; do
   for IP in ${ADDITIONAL_ROUTES}; do ip_route_add ${IP}; done
 
   # remove routes for containers that are no longer present
-  # we only handle CONTAINER_IPS here as ADDITIONAL_ROUTES are not expected to change
   for IP in $(ip_route_show | awk '{print $1}'); do
     ip_route_check "${CONTAINER_IPS}" "${IP}" || ip_route_remove "${IP}"
   done
