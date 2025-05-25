@@ -53,12 +53,12 @@ docker compose up -d
 
 Now you should see a new interface appear on the host named `macvlan@eth0` (or similar) and should be able to reach attached containers just fine.
 
-| Environment Variable            | Description                                                                                                                                | Default                          | Required |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- | -------- |
-| `MACVLAN_DOCKER_NETWORK`        | name of the Docker network in `macvlan` mode                                                                                               | \<unset\>                        | yes      |
-| `MACVLAN_BRIDGE_IP`             | one free IP in the macvlan subnet for bridging purposes                                                                                    | \<unset\>                        | yes      |
-| `MACVLAN_BRIDGE_INTERFACE_NAME` | name of the bridge interface                                                                                                               | same as `MACVLAN_DOCKER_NETWORK` | no       |
-| `ADDITIONAL_ROUTES`             | space-separated list of additional routes on the bridge (can contain VIPs)                                                                 | ""                               | no       |
-| `CLEANUP_ON_EXIT`               | controls if the bridge is removed when the container exits. Setting this to `true` may disrupt ongoing services during container restarts. | false                            | no       |
-| `TZ`                            | timezone used by the container                                                                                                             | UTC                              | no       |
-| `DEBUG`                         | enable debug output                                                                                                                        | false                            | no       |
+| Environment Variable            | Description                                                                                                                                            | Default                          | Required |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- | -------- |
+| `MACVLAN_DOCKER_NETWORK`        | name of the Docker network in `macvlan` mode                                                                                                           | \<unset\>                        | yes      |
+| `MACVLAN_BRIDGE_IP`             | one free IP in the macvlan subnet for bridging purposes                                                                                                | \<unset\>                        | yes      |
+| `MACVLAN_BRIDGE_INTERFACE_NAME` | name of the bridge interface                                                                                                                           | same as `MACVLAN_DOCKER_NETWORK` | no       |
+| `ADDITIONAL_ROUTES`             | space-separated list of additional routes on the bridge (can contain VIPs)                                                                             | ""                               | no       |
+| `CLEANUP_ON_EXIT`               | controls if the bridge and routes are removed when the container exits. Setting this to `true` may disrupt ongoing services during container restarts. | false                            | no       |
+| `TZ`                            | timezone used by the container                                                                                                                         | UTC                              | no       |
+| `DEBUG`                         | enable debug output                                                                                                                                    | false                            | no       |

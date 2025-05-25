@@ -25,6 +25,10 @@ function debug {
   [[ "${DEBUG}" == "true" || "${DEBUG}" == "1" ]] && log "$@"
 }
 
+function ip_route_show {
+  ip route show dev ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep -v kernel
+}
+
 function ip_route_add {
   IP=$(echo ${1} | cut -d'/' -f1)
   ip route show dev ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep -E "^${IP}(/[0-9]+|\s)" >/dev/null || (
@@ -33,8 +37,26 @@ function ip_route_add {
     )
 }
 
+function ip_route_remove {
+  IP=$(echo ${1} | cut -d'/' -f1)
+  log "[$(date)] Removing route for ${IP} ..."
+  ip route del ${IP} dev ${MACVLAN_BRIDGE_INTERFACE_NAME}
+}
+
+function ip_route_check {
+  CONTAINER_IPS="$1"
+  IP=$(echo ${2} | cut -d'/' -f1)
+
+  echo $CONTAINER_IPS | grep -qE "^${IP}$" && return 0 || return 1
+}
+
 function cleanup {
-  log "[$(date)] Cleaning up..."
+  log "[$(date)] Removing routes on exit ..."
+  for IP in $(ip_route_show | awk '{print $1}'); do
+    ip_route_remove "${IP}"
+  done
+
+  log "[$(date)] Removing interface on exit ..."
   ip link del ${MACVLAN_BRIDGE_INTERFACE_NAME}
 }
 
@@ -56,13 +78,21 @@ ip addr show ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep ${MACVLAN_BRIDGE_IP} || ip 
 log "[$(date)] Bringing interface up: ${MACVLAN_BRIDGE_INTERFACE_NAME} ..."
 ip link show ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep "state UP" || ip link set ${MACVLAN_BRIDGE_INTERFACE_NAME} up
 
+# loop
 while [ true ]; do
-  debug "[$(date)] Checking for docker network members..."
-  CONTAINER_IPS=$(docker network inspect ${MACVLAN_DOCKER_NETWORK} | jq -r '.[].Containers | to_entries[].value.IPv4Address')
+  debug "[$(date)] Checking for docker network members ..."
+  CONTAINER_IPS=$(docker network inspect ${MACVLAN_DOCKER_NETWORK} | jq -r '.[].Containers | to_entries[].value.IPv4Address  | split("/")[0]')
 
+  # add missing routes for containers
   for IP in ${CONTAINER_IPS}; do ip_route_add ${IP}; done
   for IP in ${ADDITIONAL_ROUTES}; do ip_route_add ${IP}; done
 
-  debug "$(ip route show dev ${MACVLAN_BRIDGE_INTERFACE_NAME} | grep -v kernel)"
+  # remove routes for containers that are no longer present
+  # we only handle CONTAINER_IPS here as ADDITIONAL_ROUTES are not expected to change
+  for IP in $(ip_route_show | awk '{print $1}'); do
+    ip_route_check "${CONTAINER_IPS}" "${IP}" || ip_route_remove "${IP}"
+  done
+
+  debug "$(ip_route_show)"
   sleep ${INTERVAL:-5}
 done
